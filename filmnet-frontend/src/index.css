@@ -1,3 +1,4 @@
+/* --- DIN URSPRUNGLIGA GRUNDSTIL --- */
 body {
   margin: 0;
   background: #000;
@@ -24,26 +25,56 @@ body {
   color: #4caf50;
 }
 
+/* --- DIN URSPRUNGLIGA GRID-LAYOUT --- */
 .main-container {
   max-width: 1200px;
   margin: 0 auto;
   padding: 20px;
   display: grid;
-  grid-template-columns: 1fr 400px;
+  grid-template-columns: 1fr 400px; /* Din original-grid */
   gap: 20px;
 }
 
-.video-box {
-  position: relative;
-  background: #000;
-  aspect-ratio: 16/9;
+/* --- VIDEO SEKTION (ENDAST DENNA ÄR ÄNDRAD FÖR ATT FIXA OVERLAY) --- */
+
+.video-section {
+  /* Behövs för att grid ska funka bra */
+  display: flex;
+  flex-direction: column;
 }
-video {
+
+/* 1. Boxen sätter storleken (16:9) */
+.video-box {
+  width: 100%;
+  aspect-ratio: 16/9;
+  background: #000;
+  position: relative; /* VIKTIGT */
+  border: 1px solid #333; /* Din original-border */
+}
+
+/* 2. Wrappern håller ordning på lagren */
+.video-wrapper {
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
   height: 100%;
-  border: 1px solid #333;
-  display: block;
+  overflow: hidden;
 }
+
+/* 3. Videon ligger i botten */
+.video-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  z-index: 1;
+}
+
+/* 4. Paus-rutan (Overlay) - Ligger överst */
+/* --- PAUS-RUTAN (OVERLAY) --- */
 
 .next-overlay {
   position: absolute;
@@ -51,25 +82,109 @@ video {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.9);
+  z-index: 20;
+
+  /* Blårandig bakgrund */
+  background-color: #000;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    #000080,
+    #000080 4px,
+    #000000 4px,
+    #000000 8px
+  );
+
+  font-family: "Arial Black", "Arial Bold", Impact, sans-serif;
+  color: white;
+
+  /* Layout: Sida vid sida */
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   justify-content: center;
   align-items: center;
-  text-align: center;
-  z-index: 20;
+  gap: 50px;
+
+  padding: 40px;
+  box-sizing: border-box;
+  box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.8);
 }
-.countdown-time {
-  font-size: 5em;
-  font-weight: bold;
-  color: #4caf50;
-  font-family: monospace;
+
+/* Vänster sida (Text) */
+.overlay-text-group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end; /* Högerjustera mot bilden */
+  text-align: right;
+  max-width: 50%;
 }
+
+/* Höger sida (Bild) */
+.next-poster-preview {
+  max-height: 60%;
+  width: auto;
+  border: 4px solid #fff;
+  box-shadow: 10px 10px 0px rgba(0, 0, 0, 0.5);
+  object-fit: contain;
+  transform: rotate(3deg);
+}
+
+/* 1. Filmtiteln (Nu störst och överst) */
 .next-title-display {
-  font-size: 1.5em;
-  margin-top: 10px;
-  font-weight: bold;
+  font-size: 2.5em;
+  font-weight: 900;
+  color: #fff;
+  text-transform: uppercase;
+  margin-bottom: 5px;
+  line-height: 1.1;
+  text-shadow: 3px 3px 0px #000;
 }
+
+/* 2. Skådespelare */
+.next-actors-display {
+  font-size: 1em;
+  color: #fbc02d;
+  font-weight: bold;
+  margin-bottom: 30px; /* Extra luft ner till klockan */
+  text-shadow: 2px 2px 0px #000;
+}
+
+/* 3. Header: "NÄSTA FILM BÖRJAR OM" */
+.overlay-header {
+  font-size: 0.9em; /* Liten och diskret */
+  color: #ccc;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 0px;
+  text-shadow: 1px 1px 0px #000;
+}
+
+/* 4. Klockan (Nu mycket mindre) */
+.countdown-time {
+  font-size: 2.5em; /* Minskat från 4em */
+  font-weight: 900;
+  color: #adff2f;
+  font-family: "Courier New", monospace;
+  margin: 0;
+  text-shadow: 2px 2px 0px #000;
+  line-height: 1;
+}
+
+/* Buffringstext */
+.buffering-hint {
+  position: absolute;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.8em;
+  color: #fff;
+  text-transform: uppercase;
+  font-weight: bold;
+  background-color: #000;
+  padding: 5px 15px;
+  border: 2px solid #fff;
+  letter-spacing: 1px;
+}
+/* --- DIN URSPRUNGLIGA EPG & META (ÅTERSTÄLLD) --- */
 
 .meta-card {
   background: #151515;
@@ -96,12 +211,13 @@ video {
   line-height: 1.4;
 }
 
+/* Här är din specifika EPG-stil */
 .epg-container {
   background: #111;
   border: 1px solid #333;
   border-radius: 10px;
   overflow: hidden;
-  height: fit-content;
+  height: fit-content; /* <-- Din original-inställning */
 }
 .tabs {
   display: flex;
@@ -143,110 +259,185 @@ video {
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.video-box {
-  position: relative;
+
+/* =========================================
+   MOBILANPASSNING (RESPONSIV STYLING)
+   ========================================= */
+
+@media (max-width: 768px) {
+  /* 1. Ändra huvudlayouten till en kolumn */
+  .main-container {
+    display: flex;
+    flex-direction: column;
+    height: auto; /* Låt sidan växa på höjden */
+    gap: 10px;
+    padding: 10px;
+  }
+
+  .video-section {
+    flex: none;
+    width: 100%;
+  }
+
+  .epg-container {
+    width: 100%;
+    margin-top: 10px;
+  }
+
+  .header {
+    padding: 10px 20px;
+  }
+
+  .header-logo {
+    font-size: 1.5em;
+  }
+
+  /* 2. Anpassa Pausrutan för mobil */
+  .next-overlay {
+    flex-direction: column-reverse; /* Bilden överst, texten under (eller tvärtom) */
+    gap: 20px;
+    padding: 20px;
+  }
+
+  /* Textgruppen tar hela bredden */
+  .overlay-text-group {
+    max-width: 100%;
+    align-items: center; /* Centrera allt */
+    text-align: center;
+  }
+
+  /* Bilden får mindre plats */
+  .next-poster-preview {
+    max-height: 40%;
+    transform: rotate(0deg); /* Ta bort rotation för att spara plats */
+    margin-bottom: 10px;
+  }
+
+  /* Minska textstorlekar för mobil */
+  .next-title-display {
+    font-size: 1.5em;
+  }
+
+  .next-actors-display {
+    font-size: 0.9em;
+    margin-bottom: 15px;
+  }
+
+  .countdown-time {
+    font-size: 2em;
+  }
+
+  .overlay-header {
+    font-size: 0.8em;
+  }
+
+  /* 3. Anpassa Meta-kortet under videon */
+  .meta-card {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .meta-poster {
+    width: 80px; /* Mindre poster */
+  }
 }
+/* =========================================
+   TV-ANPASSNING (STOR SKÄRM / 4K / 65")
+   ========================================= */
 
-.retro-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 10;
+@media (min-width: 1921px) {
+  /* 1. Låt sidan ta upp hela TV-bredden */
+  .main-container {
+    max-width: 95%; /* Använd 95% av skärmen istället för 1200px */
+    grid-template-columns: 1fr 600px; /* Gör EPG-listan till höger bredare (600px) */
+    gap: 40px;
+  }
 
-  /* Den klassiska blårandiga bakgrunden */
-  background: repeating-linear-gradient(
-    to bottom,
-    #000080 0px,
-    #000080 4px,
-    #000000 4px,
-    #000000 6px
-  );
+  /* 2. Förstora grundtexten för "Soff-läge" */
+  body {
+    font-size: 1.5em; /* All text blir 50% större som bas */
+  }
 
-  color: white;
-  display: flex;
-  flex-direction: column;
-  padding: 40px;
-  box-sizing: border-box;
-  font-family: "Arial", sans-serif; /* Eller ditt egna font */
-}
+  /* 3. Header & Logga */
+  .header {
+    padding: 30px 60px;
+  }
+  .header-logo {
+    font-size: 4em; /* Enorm logga */
+  }
+  .wall-clock {
+    font-size: 3em;
+  }
 
-.retro-header {
-  margin-bottom: 20px;
-}
+  /* 4. Anpassa EPG (Tablån) för bättre läsbarhet */
+  .epg-container {
+    border-radius: 16px;
+  }
+  .tab-btn {
+    font-size: 1.2em;
+    padding: 20px;
+  }
+  .epg-row {
+    padding: 25px; /* Mer luft i listan */
+    font-size: 1.1em;
+  }
+  .epg-time {
+    width: 100px; /* Bredare kolumn för klockslag */
+  }
 
-.channel-logo {
-  width: 150px;
-  filter: drop-shadow(5px 5px 0px #000);
-}
+  /* 5. PAUS-RUTAN (OVERLAY) - Gör den maffig! */
+  .next-overlay {
+    gap: 100px; /* Stort avstånd mellan text och bild */
+  }
 
-.retro-content {
-  display: flex;
-  flex: 1;
-  align-items: flex-start;
-  gap: 40px;
-  padding-top: 20px;
-}
+  /* Bilden på TV:n */
+  .next-poster-preview {
+    border-width: 8px; /* Tjockare ram */
+    box-shadow: 20px 20px 0px rgba(0, 0, 0, 0.5); /* Djupare skugga */
+    /* Bilden skalas automatiskt tack vare max-height i % från bas-css */
+  }
 
-.retro-info {
-  flex: 1;
-  text-shadow: 3px 3px 0px #000;
-}
+  /* Texterna i overlayen */
+  .next-title-display {
+    font-size: 5em; /* Gigantisk titel */
+    text-shadow: 6px 6px 0px #000;
+  }
 
-.retro-title {
-  font-size: 3rem;
-  font-weight: 900;
-  text-transform: uppercase;
-  margin-bottom: 10px;
-  color: #fff;
-  letter-spacing: -1px;
-}
+  .next-actors-display {
+    font-size: 2em;
+    margin-bottom: 50px;
+  }
 
-.retro-meta {
-  font-size: 1.5rem;
-  color: #ddd;
-  margin-bottom: 30px;
-  font-weight: bold;
-  text-transform: uppercase;
-}
+  .overlay-header {
+    font-size: 1.5em;
+  }
 
-.retro-cast-header {
-  font-size: 1.1rem;
-  color: #aaa;
-  margin-bottom: 5px;
-  font-weight: bold;
-}
+  .countdown-time {
+    font-size: 6em; /* Enorm nedräkning */
+    text-shadow: 5px 5px 0px #000;
+  }
 
-.retro-cast {
-  font-size: 1.4rem;
-  line-height: 1.4;
-  color: #fff;
-  font-weight: bold;
-}
+  .buffering-hint {
+    font-size: 1.2em;
+    bottom: 50px;
+    padding: 10px 30px;
+    border-width: 4px;
+  }
 
-.retro-poster-frame {
-  width: 280px;
-  border: 5px solid #fff;
-  background: #000;
-  box-shadow: 10px 10px 0px #000;
-  transform: rotate(2deg); /* Liten retro-vinkel */
-}
-
-.retro-poster-img {
-  width: 100%;
-  display: block;
-}
-
-.retro-footer {
-  margin-top: auto;
-  text-align: center;
-  font-size: 2rem;
-  background: #000;
-  color: #fff;
-  padding: 10px;
-  border: 3px solid #fff;
-  font-weight: bold;
-  text-transform: uppercase;
-  letter-spacing: 2px;
+  /* 6. Meta-kortet under videon */
+  .meta-card {
+    padding: 40px;
+    gap: 40px;
+  }
+  .meta-poster {
+    width: 250px; /* Större poster nere i infon */
+  }
+  .meta-info h2 {
+    font-size: 3em;
+  }
+  .meta-plot {
+    font-size: 1.2em;
+    line-height: 1.6;
+  }
 }

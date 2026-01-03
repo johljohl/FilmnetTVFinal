@@ -40,16 +40,7 @@ CLUBS = {
     "Night Club":   {"slots": [23, 1, 3, 5], "color": "#b39ddb"}
 }
 
-# --- 2. FRONTEND HTML (Fallback) ---
-INDEX_HTML = """
-<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"><title>Filmnet Monitor</title></head>
-<body><h1>Filmnet Server Running</h1><p>Använd React-appen för att titta.</p></body>
-</html>
-"""
-
-# --- 3. BACKEND APPLIKATION ---
+# --- 2. BACKEND APPLIKATION ---
 
 class FilmnetApp:
     def __init__(self, root):
@@ -95,7 +86,7 @@ class FilmnetApp:
         self.lbl_status = tk.Label(top, text="Motor: Avstängd", fg="#555", font=("Arial", 10, "bold"))
         self.lbl_status.pack(side=tk.LEFT, padx=10)
 
-        # NYTT: Nedräkningsklocka
+        # Nedräkningsklocka
         self.lbl_countdown = tk.Label(top, text="--:--:--", fg="#0f0", bg="black", font=("Consolas", 16, "bold"), width=10)
         self.lbl_countdown.pack(side=tk.RIGHT, padx=20)
 
@@ -129,8 +120,12 @@ class FilmnetApp:
                         h, m = divmod(m, 60)
                         self.lbl_countdown.config(text=f"{h:02d}:{m:02d}:{s:02d}", fg="#0f0", bg="black")
                     else:
-                        # Pausläge
-                        self.lbl_countdown.config(text="PAUS", fg="yellow", bg="#333")
+                        # Pausläge - visa tid till nästa start
+                        gap_sec = int((next_start - datetime.now()).total_seconds())
+                        if gap_sec < 0: gap_sec = 0
+                        gm, gs = divmod(gap_sec, 60)
+                        gh, gm = divmod(gm, 60)
+                        self.lbl_countdown.config(text=f"GAP {gh:02d}:{gm:02d}:{gs:02d}", fg="yellow", bg="#333")
                 else:
                     self.lbl_countdown.config(text="NO FLM", fg="red", bg="black")
             except:
@@ -267,19 +262,16 @@ class FilmnetApp:
         while self.is_running:
             remaining = (next_start_dt - datetime.now()).total_seconds()
             
-            # 1. STOPPA DIREKT VID 0.1s KVAR
-            if remaining <= 0.1:
+            # 1. STOPPA DIREKT VID 15s KVAR (Pre-roll start)
+            if remaining <= 15:
                 if self.feeder_proc: 
                     try: self.feeder_proc.kill() 
                     except: pass
+                # Spela en kort brygga för att rensa pipe
+                self.play_standby_loop(si, preset, 0.5)
+                # Bryt loopen -> går tillbaka till run_broadcast_loop -> startar filmen
                 break 
             
-            # 2. Sista 5 sekunderna kör vi bara standby för ren start
-            if remaining < 5:
-                self.is_gap_state = True
-                self.play_standby_loop(si, preset, remaining)
-                continue
-
             self.is_gap_state = True
             t = None
             if remaining < 60 and bumpers: t = random.choice(bumpers)
@@ -299,8 +291,8 @@ class FilmnetApp:
                 self.feeder_proc = subprocess.Popen(cmd, stdout=self.broadcast_proc.stdin, stderr=subprocess.DEVNULL, startupinfo=si)
                 
                 while self.feeder_proc.poll() is None:
-                    # HÅRD KOLL: Om tiden är ute, döda direkt
-                    if (next_start_dt - datetime.now()).total_seconds() <= 0.1:
+                    # Om vi kommer under 15s medan trailern kör -> döda den
+                    if (next_start_dt - datetime.now()).total_seconds() <= 15:
                         self.feeder_proc.kill()
                         break
                     time.sleep(0.1)
@@ -364,19 +356,50 @@ class FilmnetApp:
     def fetch_tmdb(self, path):
         if not path: return {}
         if path in self.movie_meta: return self.movie_meta[path]
+
         fn = os.path.basename(path)
         y = re.search(r"(\d{4})", fn); yr = y.group(1) if y else ""
         nm = fn.split(yr)[0] if yr else fn.rsplit('.', 1)[0]
         cl = nm.replace('.', ' ').replace('-', ' ').replace('_', ' ').strip()
+        
+        print(f"🔎 Söker TMDB efter: '{cl}'...")
+
         try:
-            r = requests.get(f"https://api.themoviedb.org/3/search/movie?api_key={TMDB_API_KEY}&query={cl}&language=sv-SE&primary_release_year={yr}", timeout=2).json()
-            if not r.get('results'): r = requests.get(f"https://api.themoviedb.org/3/search/movie?api_key={TMDB_API_KEY}&query={cl}&language=en-US&primary_release_year={yr}", timeout=2).json()
+            # 1. Hämta grundinfo (Sökning)
+            search_url = f"https://api.themoviedb.org/3/search/movie?api_key={TMDB_API_KEY}&query={cl}&language=sv-SE&primary_release_year={yr}"
+            r = requests.get(search_url, timeout=2).json()
+            
+            # Fallback till engelska om inget hittas
+            if not r.get('results'):
+                search_url = f"https://api.themoviedb.org/3/search/movie?api_key={TMDB_API_KEY}&query={cl}&language=en-US&primary_release_year={yr}"
+                r = requests.get(search_url, timeout=2).json()
+
             if r.get('results'):
                 res = r['results'][0]
-                self.movie_meta[path] = {"tmdb_title": res['title'],"plot": res['overview'],"poster": f"https://image.tmdb.org/t/p/w500{res['poster_path']}" if res.get('poster_path') else ""}
+                movie_id = res['id']
+                
+                # 2. Hämta SKÅDESPELARE (Credits)
+                credits_url = f"https://api.themoviedb.org/3/movie/{movie_id}/credits?api_key={TMDB_API_KEY}"
+                cred_r = requests.get(credits_url, timeout=2).json()
+                
+                # Plocka topp 3 skådespelare
+                cast = cred_r.get('cast', [])
+                actors_list = [c['name'] for c in cast[:3]]
+                actors_str = ", ".join(actors_list)
+
+                self.movie_meta[path] = {
+                    "tmdb_title": res['title'],
+                    "plot": res.get('overview', "Info saknas."),
+                    "poster": f"https://image.tmdb.org/t/p/w500{res['poster_path']}" if res.get('poster_path') else "",
+                    "actors": actors_str
+                }
                 return self.movie_meta[path]
-        except: pass
-        return {"tmdb_title": fn, "plot": "Info saknas.", "poster": ""}
+                
+        except Exception as e:
+            print(f"❌ Fel vid TMDB: {e}")
+            pass
+        
+        return {"tmdb_title": fn, "plot": "Info saknas.", "poster": "", "actors": ""}
 
     def get_duration(self, p):
         if p in self.duration_cache: return self.duration_cache[p]
@@ -402,7 +425,6 @@ class FilmnetApp:
                 self.refresh_ui()
             except: pass
 
-    # --- FIXAD SAVE_CONFIG (Syntax Error Fixed) ---
     def save_config(self):
         try:
             with open(CONFIG_FILE, "w") as f:
@@ -435,7 +457,7 @@ class FilmnetApp:
                         now_path = gui.get_assigned_movie(cur['club'], cur['hour'])
                         now_meta = gui.fetch_tmdb(now_path) if now_path else {"tmdb_title": "Ingen sändning", "plot": "", "poster": ""}
                         next_path = gui.get_assigned_movie(next_obj['club'], next_obj['hour'])
-                        next_meta = gui.fetch_tmdb(next_path) if next_path else {"tmdb_title": "Slut för idag", "plot": "", "poster": ""}
+                        next_meta = gui.fetch_tmdb(next_path) if next_path else {"tmdb_title": "Slut för idag", "plot": "", "poster": "", "actors": ""}
                         schedules = {}
                         for cn in CLUBS:
                             schedules[cn] = []
@@ -444,6 +466,7 @@ class FilmnetApp:
                                 m_title = gui.fetch_tmdb(m_path)['tmdb_title'] if m_path else "TBA"
                                 schedules[cn].append({"time": f"{s_hour:02d}:00", "title": m_title, "is_current": (cn == cur['club'] and s_hour == cur['hour'])})
                         gap_sec = int((next_dt - datetime.now()).total_seconds())
+                        
                         resp = {"active_club": cur['club'], "active_color": CLUBS[cur['club']]['color'], "is_gap": gui.is_gap_state, "gap_time": f"{gap_sec//60:02d}:{gap_sec%60:02d}", "playing_now": now_meta, "next_movie": next_meta, "all_schedules": schedules}
                         self.wfile.write(json.dumps(resp).encode())
                     except: self.wfile.write(json.dumps({}).encode())

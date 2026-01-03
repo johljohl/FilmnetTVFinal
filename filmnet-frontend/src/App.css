@@ -1,42 +1,159 @@
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
+/* --- GRUNDLÄGGANDE LAYOUT --- */
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #121212;
+  color: white;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif;
+}
+
+.main-container {
+  display: flex;
+  flex-direction: row;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* --- VIDEO SEKTIONEN (Vänster sida) --- */
+.video-section {
+  flex: 3; /* Tar upp 75% av bredden */
+  display: flex;
+  flex-direction: column;
+  background-color: #000;
+}
+
+/* Behållaren som styr storleken på spelaren (16:9 format) */
+.video-box {
+  width: 100%;
+  aspect-ratio: 16 / 9; /* Tvingar fram widescreen-format */
+  background-color: #000;
+  position: relative; /* Viktigt för wrapper */
+}
+
+/* --- DEN NYA WRAPPERN (Hjärtat i lösningen) --- */
+.video-wrapper {
+  position: absolute; /* Fyller ut video-box */
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* --- LAGER 1: VIDEON --- */
+.video-layer {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background-color: #000;
+}
+
+/* --- LAGER 2: PAUS-RUTAN (Overlay) --- */
+.overlay-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 10; /* Ligger ovanpå videon */
+
+  /* Snygg bakgrund och centrering */
+  background-color: rgba(0, 0, 0, 0.95); /* 95% svart */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   text-align: center;
+  padding: 20px;
+  box-sizing: border-box;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+/* --- STYLING FÖR INNEHÅLLET I PAUS-RUTAN --- */
+
+/* Begränsa bildens storlek så den inte tar över skärmen */
+.next-poster-preview {
+  height: 40%; /* Max 40% av höjden */
+  width: auto;
+  border-radius: 8px;
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+  margin-bottom: 20px;
+  object-fit: contain;
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.overlay-header {
+  font-size: 1.2rem;
+  color: #aaa;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
+.countdown-time {
+  font-size: 4rem;
+  font-weight: bold;
+  font-family: "Courier New", monospace; /* Monospace för siffror som inte hoppar */
+  color: #fbc02d; /* Guld/Gul färg */
+  margin-bottom: 15px;
+  text-shadow: 0 0 10px rgba(251, 192, 45, 0.5);
 }
 
-.card {
-  padding: 2em;
+.next-title-display {
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: #fff;
+  margin-bottom: 10px;
 }
 
-.read-the-docs {
-  color: #888;
+.next-plot-display {
+  font-size: 1rem;
+  color: #bbb;
+  max-width: 600px; /* Gör inte textraderna för långa */
+  line-height: 1.4;
+}
+
+.buffering-hint {
+  position: absolute;
+  bottom: 20px;
+  font-size: 0.8rem;
+  color: #444;
+}
+
+/* --- EPG / SCHEMA (Höger sida) --- */
+.epg-container {
+  flex: 1; /* Tar upp 25% av bredden */
+  background-color: #1a1a1a;
+  border-left: 1px solid #333;
+  display: flex;
+  flex-direction: column;
+}
+
+/* --- META INFO (Under videon) --- */
+.meta-card {
+  padding: 20px;
+  display: flex;
+  gap: 20px;
+  background-color: #111;
+  color: white;
+}
+
+.meta-poster {
+  width: 100px;
+  border-radius: 5px;
+}
+
+.meta-info h2 {
+  margin-top: 0;
+  color: #fbc02d;
+}
+
+/* --- HEADER --- */
+.header {
+  height: 60px;
+  background-color: #000;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  border-bottom: 1px solid #333;
 }

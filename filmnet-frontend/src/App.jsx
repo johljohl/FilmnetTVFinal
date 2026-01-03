@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from "react";
 import Hls from "hls.js";
 import "./index.css";
+import GapOverlay from "./GapOverlay";
 
-const API_URL = "http://192.168.0.3:5173"; // Se till att porten matchar Python-servern (8000)
+const API_URL = "http://192.168.0.3:8000"; // Kontrollera din IP
 
 // --- VIDEO PLAYER COMPONENT ---
-const VideoPlayer = ({ src, isGap }) => {
+const VideoPlayer = ({ src }) => {
   const videoRef = useRef(null);
   const hlsRef = useRef(null);
   const lastTimeRef = useRef(0);
@@ -23,6 +24,8 @@ const VideoPlayer = ({ src, isGap }) => {
         debug: false,
         manifestLoadingTimeOut: 10000,
         enableWorker: true,
+        maxBufferLength: 30,
+        maxMaxBufferLength: 60,
       });
       hlsRef.current = hls;
       hls.loadSource(src);
@@ -30,9 +33,20 @@ const VideoPlayer = ({ src, isGap }) => {
       hls.on(Hls.Events.MANIFEST_PARSED, () => {
         video.play().catch((e) => console.log("Autoplay blocked:", e));
       });
+
       hls.on(Hls.Events.ERROR, (event, data) => {
         if (data.fatal) {
-          hls.startLoad();
+          switch (data.type) {
+            case Hls.ErrorTypes.NETWORK_ERROR:
+              hls.startLoad();
+              break;
+            case Hls.ErrorTypes.MEDIA_ERROR:
+              hls.recoverMediaError();
+              break;
+            default:
+              hls.destroy();
+              break;
+          }
         }
       });
     } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
@@ -59,10 +73,7 @@ const VideoPlayer = ({ src, isGap }) => {
           console.log("⚠️ Video stall detected, reloading...");
           stallCountRef.current = 0;
           if (hlsRef.current) {
-            hlsRef.current.stopLoad();
-            hlsRef.current.loadSource(src);
-            hlsRef.current.attachMedia(video);
-            video.play().catch(() => {});
+            hlsRef.current.recoverMediaError();
           }
         }
       }
@@ -73,11 +84,11 @@ const VideoPlayer = ({ src, isGap }) => {
   return (
     <video
       ref={videoRef}
+      className="video-layer"
       autoPlay
       muted
       playsInline
-      controls
-      style={{ width: "100%", height: "100%" }}
+      controls={false}
     />
   );
 };
@@ -87,8 +98,6 @@ function App() {
   const [wallClock, setWallClock] = useState("00:00:00");
   const [data, setData] = useState(null);
   const [activeTab, setActiveTab] = useState(null);
-
-  // NYTT: Lokal state för nedräkning
   const [localGapSeconds, setLocalGapSeconds] = useState(0);
 
   // 1. Klocka
@@ -109,26 +118,22 @@ function App() {
         setData(json);
         setActiveTab((prev) => (prev ? prev : json.active_club));
 
-        // Synka lokal nedräkning med servern
         if (json.is_gap && json.gap_time) {
           const [min, sec] = json.gap_time.split(":").map(Number);
           const totalSec = min * 60 + sec;
-          // Uppdatera bara om det skiljer mer än 2 sekunder (för att undvika hack)
+
           if (Math.abs(totalSec - localGapSeconds) > 2) {
             setLocalGapSeconds(totalSec);
           }
-        } else {
-          // Om servern säger att gap är över, nolla direkt
-          setLocalGapSeconds(0);
         }
       } catch (err) {}
     };
     fetchStatus();
     const poller = setInterval(fetchStatus, 2000);
     return () => clearInterval(poller);
-  }, []); // Notera: localGapSeconds är inte med här för att undvika loop
+  }, []);
 
-  // 3. Lokal nedräkning (tickar varje sekund)
+  // 3. Lokal nedräkning
   useEffect(() => {
     if (localGapSeconds <= 0) return;
     const countdown = setInterval(() => {
@@ -139,27 +144,26 @@ function App() {
 
   if (!data)
     return (
-      <div style={{ padding: 20, color: "#fff" }}>Ansluter till Filmnet...</div>
+      <div
+        style={{
+          padding: 20,
+          color: "#fff",
+          background: "#000",
+          height: "100vh",
+        }}
+      >
+        Ansluter till Filmnet...
+      </div>
     );
 
   const currentTab = activeTab || data.active_club;
+  const showGapOverlay = localGapSeconds > 0;
 
-  // Kärnlogik: Visa bara overlay om lokal tid > 0 (även om servern är seg)
-  const showGapOverlay = data.is_gap && localGapSeconds > 0;
-
-  // Om vi visar gap -> Visa "Nästa film", annars visa "Nu spelas"
   const displayMovie = showGapOverlay
     ? data.next_movie
     : data.playing_now || data.next_movie;
-  const schedule = data.all_schedules ? data.all_schedules[currentTab] : [];
 
-  const formatTime = (s) => {
-    const m = Math.floor(s / 60);
-    const sec = s % 60;
-    return `${m.toString().padStart(2, "0")}:${sec
-      .toString()
-      .padStart(2, "0")}`;
-  };
+  const schedule = data.all_schedules ? data.all_schedules[currentTab] : [];
 
   return (
     <>
@@ -176,23 +180,19 @@ function App() {
       <div className="main-container">
         <div className="video-section">
           <div className="video-box">
-            {showGapOverlay && (
-              <div className="next-overlay">
-                <div style={{ fontSize: "1.2em", color: "#888" }}>
-                  NÄSTA FILM BÖRJAR OM:
-                </div>
-                <div className="countdown-time">
-                  {formatTime(localGapSeconds)}
-                </div>
-                <div className="next-title-display">
-                  Härnäst: {displayMovie?.tmdb_title}
-                </div>
-              </div>
-            )}
-            <VideoPlayer
-              src={`${API_URL}/stream.m3u8`}
-              isGap={showGapOverlay}
-            />
+            {/* VIKTIG WRAPPER FÖR ATT CSS SKA FUNKA */}
+            <div className="video-wrapper">
+              {/* LAGER 1: Overlay */}
+              {showGapOverlay && (
+                <GapOverlay
+                  seconds={localGapSeconds}
+                  nextMovie={data.next_movie}
+                />
+              )}
+
+              {/* LAGER 2: Videospelare */}
+              <VideoPlayer src={`${API_URL}/stream.m3u8`} />
+            </div>
           </div>
 
           <div className="meta-card">
