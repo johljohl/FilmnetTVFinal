@@ -1,0 +1,252 @@
+body {
+  margin: 0;
+  background: #000;
+  color: white;
+  font-family: "Segoe UI", Arial;
+  overflow-x: hidden;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  padding: 20px 40px;
+  background: #111;
+  border-bottom: 2px solid #333;
+}
+.header-logo {
+  font-size: 2.2em;
+  font-weight: 900;
+  letter-spacing: 5px;
+}
+.wall-clock {
+  font-family: monospace;
+  font-size: 1.5em;
+  color: #4caf50;
+}
+
+.main-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  display: grid;
+  grid-template-columns: 1fr 400px;
+  gap: 20px;
+}
+
+.video-box {
+  position: relative;
+  background: #000;
+  aspect-ratio: 16/9;
+}
+video {
+  width: 100%;
+  height: 100%;
+  border: 1px solid #333;
+  display: block;
+}
+
+.next-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.9);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  z-index: 20;
+}
+.countdown-time {
+  font-size: 5em;
+  font-weight: bold;
+  color: #4caf50;
+  font-family: monospace;
+}
+.next-title-display {
+  font-size: 1.5em;
+  margin-top: 10px;
+  font-weight: bold;
+}
+
+.meta-card {
+  background: #151515;
+  padding: 20px;
+  border-radius: 12px;
+  margin-top: 20px;
+  display: flex;
+  gap: 20px;
+  border: 1px solid #222;
+}
+.meta-poster {
+  width: 140px;
+  border-radius: 6px;
+  object-fit: cover;
+}
+.meta-info h2 {
+  margin: 0;
+  color: #4caf50;
+}
+.meta-plot {
+  color: #aaa;
+  font-size: 0.9em;
+  margin-top: 10px;
+  line-height: 1.4;
+}
+
+.epg-container {
+  background: #111;
+  border: 1px solid #333;
+  border-radius: 10px;
+  overflow: hidden;
+  height: fit-content;
+}
+.tabs {
+  display: flex;
+  background: #000;
+}
+.tab-btn {
+  flex: 1;
+  padding: 12px;
+  background: none;
+  color: #555;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 11px;
+}
+.tab-btn.active {
+  color: #fff;
+  background: #1a1a1a;
+  border-bottom: 3px solid #4caf50;
+}
+
+.epg-row {
+  display: flex;
+  padding: 15px;
+  border-bottom: 1px solid #222;
+  font-size: 0.9em;
+}
+.epg-row.now {
+  background: rgba(76, 175, 80, 0.2);
+  font-weight: bold;
+}
+.epg-time {
+  width: 60px;
+  font-family: monospace;
+  color: #777;
+}
+.epg-title {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.video-box {
+  position: relative;
+}
+
+.retro-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 10;
+
+  /* Den klassiska blårandiga bakgrunden */
+  background: repeating-linear-gradient(
+    to bottom,
+    #000080 0px,
+    #000080 4px,
+    #000000 4px,
+    #000000 6px
+  );
+
+  color: white;
+  display: flex;
+  flex-direction: column;
+  padding: 40px;
+  box-sizing: border-box;
+  font-family: "Arial", sans-serif; /* Eller ditt egna font */
+}
+
+.retro-header {
+  margin-bottom: 20px;
+}
+
+.channel-logo {
+  width: 150px;
+  filter: drop-shadow(5px 5px 0px #000);
+}
+
+.retro-content {
+  display: flex;
+  flex: 1;
+  align-items: flex-start;
+  gap: 40px;
+  padding-top: 20px;
+}
+
+.retro-info {
+  flex: 1;
+  text-shadow: 3px 3px 0px #000;
+}
+
+.retro-title {
+  font-size: 3rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+  color: #fff;
+  letter-spacing: -1px;
+}
+
+.retro-meta {
+  font-size: 1.5rem;
+  color: #ddd;
+  margin-bottom: 30px;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.retro-cast-header {
+  font-size: 1.1rem;
+  color: #aaa;
+  margin-bottom: 5px;
+  font-weight: bold;
+}
+
+.retro-cast {
+  font-size: 1.4rem;
+  line-height: 1.4;
+  color: #fff;
+  font-weight: bold;
+}
+
+.retro-poster-frame {
+  width: 280px;
+  border: 5px solid #fff;
+  background: #000;
+  box-shadow: 10px 10px 0px #000;
+  transform: rotate(2deg); /* Liten retro-vinkel */
+}
+
+.retro-poster-img {
+  width: 100%;
+  display: block;
+}
+
+.retro-footer {
+  margin-top: auto;
+  text-align: center;
+  font-size: 2rem;
+  background: #000;
+  color: #fff;
+  padding: 10px;
+  border: 3px solid #fff;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
